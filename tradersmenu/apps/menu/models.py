@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from django.db import models
 from django.db.models import F
-from django.db.models.signals import post_save, post_delete, pre_delete
+from django.db.models.signals import post_save, pre_save, post_delete, pre_delete
 from django.dispatch import receiver
 
 from django.db import models
@@ -12,9 +12,9 @@ from django.db import models
 
 class Menu(models.Model):
     name = models.CharField(max_length=30)
-    left_key = models.IntegerField()
-    right_key = models.IntegerField()
-    level = models.IntegerField()
+    left_key = models.IntegerField(null=True)
+    right_key = models.IntegerField(null=True)
+    level = models.IntegerField(null=True)
     parent_node = models.ForeignKey('self', null=True, blank=True)
 
     def __str__(self):
@@ -35,22 +35,33 @@ class Menu(models.Model):
     def get_parent_branch(self, key):
         return self.objects.filter(left_key__lte=key.left_key, rigth_key__gte=key.right_key).order_by('left_key')
 
-    @receiver(post_save, sender=Menu)
-    def create_node(self, key, **kwargs):
-        parent = key.parent_node
-        r_key = parent.right_key
-        self.objects.filter(left_key__gt=parent.right_key).update(left_key=F('left_key') + 2, right_key=F('right_key') + 2)
-        self.objects.filter(right_key__gte=parent.left_key, left_key__lte=parent.right_key).update(right_key=F('right_key') + 2)
-        key.left_key = r_key
-        key.left_key = r_key + 1
 
-    @receiver(pre_delete, sender=Menu)
-    def create_node(self, key, **kwargs):
-        self.objects.filter(left_key__gt=key.right_key, right_key__lt=key.right_key).delete()
+@receiver(pre_save, sender=Menu)
+def create_node(sender, instance, **kwargs):
+    print(instance.parent_node, 'node')
+    if instance.parent_node:
+        parent = instance.parent_node
+        print(parent, 'parent')
+        # update following nodes
+        Menu.objects.filter(left_key__gt=parent.right_key).update(left_key=F('left_key') + 2, right_key=F('right_key') + 2)
+        # update parent nodes
+        Menu.objects.filter(right_key__gte=parent.right_key, left_key__lt=parent.right_key).update(right_key=F('right_key') + 2)
+        instance.left_key = parent.right_key
+        instance.right_key = parent.right_key + 1
+        instance.level = parent.level + 1
+    else:
+        instance.left_key = 1
+        instance.right_key = 2
+        instance.level = 0
 
-        self.objects.filter(left_key__lt=key.left_key, right_key__gt=key.right_key).update(right_key=F('right_key') - (key.right_key - key.left_key + 1))
-        self.objects.filter(left_key__gt=key.right_key).update(right_key=F('right_key') - (key.right_key -  key.left_key + 1), left_key=F('left_key') - (key.right_key - key.left_key + 1))
 
+@receiver(post_delete, sender=Menu)
+def delete_node(sender, instance, **kwargs):
+    if instance.right_key and instance.left_key:
+        Menu.objects.filter(left_key__gt=instance.right_key, right_key__lt=instance.right_key).delete()
+
+        Menu.objects.filter(left_key__lt=instance.left_key, right_key__gt=instance.right_key).update(right_key=F('right_key') - (instance.right_key - instance.left_key + 1))
+        Menu.objects.filter(left_key__gt=instance.right_key).update(right_key=F('right_key') - (instance.right_key - instance.left_key + 1), left_key=F('left_key') - (instance.right_key - instance.left_key + 1))
 
 
 
