@@ -1,12 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-    {% for object in object_list %}
-    <li><a href="{{object.id}}/">{{ object.name }}</a></li>
+{% block content %}
+    {{ deep_counter }}
+    <ul class="menu_ul">
+    {% for object in object_list.0 %}
+        <li class="menu_li"><a class="menu_a" href="{% url 'menu_url' menu_item_id=object.id  %}">{{ object.name }}</a></li>
+            {% if object.id in menu_map %}
+                {% with object_list=object_list|slice:"1:" %}
+                    {% include "menu_list.html" %}
+                {% endwith %}
+            {% endif %}
     {% endfor %}
-</body>
-</html>
+    </ul>
+{% endblock %}

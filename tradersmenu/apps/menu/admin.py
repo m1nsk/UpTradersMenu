@@ -8,7 +8,7 @@ from django.contrib import admin
 
 
 class MenuAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'left_key', 'right_key', 'level',  'parent_node')
+    list_display = ('pk', 'name', 'left_key', 'right_key', 'level', 'parent_node')
     fields = ('name', 'parent_node')
 
 admin.site.register(Menu, MenuAdmin)

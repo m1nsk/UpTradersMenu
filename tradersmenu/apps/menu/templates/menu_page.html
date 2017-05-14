@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    {% load static from staticfiles %}
+    <link rel="stylesheet" href="{% static '/normalize.css' %}">
+    <link rel="stylesheet" href="{% static '/main.css' %}">
+    <link rel="stylesheet" href="{% static '/menu_style.css' %}">
+</head>
+<body>
+<h1>Menu example</h1>
+    {% include "menu_list.html" %}
+</body>
+</html>

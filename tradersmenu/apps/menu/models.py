@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Q, Max
 from django.db.models.signals import post_save, pre_save, post_delete, pre_delete
 from django.dispatch import receiver
 
@@ -15,16 +15,30 @@ class MenuManager(models.Manager):
     def get_tree(self):
         return super(MenuManager, self).all().order_by('left_key')
 
-    def get_slave_keys(self, key):
+    def get_all_child(self, key):
         return super(MenuManager, self).filter(left_key__gte=key.left_key, right_key__lte=key.right_key).order_by('left_key')
-
-    def get_parent_branch(self, key):
-        return super(MenuManager, self).filter(left_key__lte=key.left_key, right_key__gte=key.right_key).order_by('left_key')
 
     def get_current_branch(self, key):
         return super(MenuManager, self).filter(left_key__lt=key.right_key, right_key__gt=key.left_key).order_by('left_key')
 
+    def get_first_child(self, key):
+        return super(MenuManager, self).filter(parent_key=key).order_by(
+            'left_key')
 
+    # return chain of parent menu item
+    def get_parent_branch(self, key):
+        return super(MenuManager, self).filter(left_key__lte=key.left_key, right_key__gte=key.right_key).order_by(
+            'left_key')
+
+    # return parent with closest children
+    def get_parent_with_child(self, query):
+        my_queryarr = [super(MenuManager, self).filter(level=0)]
+        for node in query:
+            my_queryarr.append(super(MenuManager, self).filter(parent_node=node).order_by('left_key'))
+        return my_queryarr
+
+
+# menu model
 class Menu(models.Model):
     name = models.CharField(max_length=30)
     left_key = models.IntegerField(null=True)
@@ -39,8 +53,10 @@ class Menu(models.Model):
         return self.name
 
 
+# insert new node
 @receiver(pre_save, sender=Menu)
 def create_node(sender, instance, **kwargs):
+    # if not a root menu item
     if instance.parent_node:
         parent = instance.parent_node
         # update following nodes
@@ -50,12 +66,23 @@ def create_node(sender, instance, **kwargs):
         instance.left_key = parent.right_key
         instance.right_key = parent.right_key + 1
         instance.level = parent.level + 1
+    # if root menu item
     else:
-        instance.left_key = 1
-        instance.right_key = 2
-        instance.level = 0
+        # find maximum right key nested set
+        max_right_key = Menu.objects.filter(level=0).aggregate(maximum=Max('right_key'))
+        max_right_key = max_right_key['maximum']
+        # if not a first root item
+        if max_right_key:
+            instance.left_key = max_right_key + 1
+            instance.right_key = max_right_key + 2
+            instance.level = 0
+        # if first root item
+        else:
+            instance.left_key = 1
+            instance.right_key = 2
+            instance.level = 0
 
-
+# delete node
 @receiver(post_delete, sender=Menu)
 def delete_node(sender, instance, **kwargs):
     if instance.right_key and instance.left_key:
