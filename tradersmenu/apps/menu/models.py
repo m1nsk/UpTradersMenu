@@ -31,8 +31,11 @@ class MenuManager(models.Manager):
             'left_key')
 
     # return parent with closest children
-    def get_parent_with_child(self, query):
-        my_queryarr = [super(MenuManager, self).filter(level=0)]
+    def get_parent_with_child(self, query, menu_name=''):
+        if menu_name:
+            my_queryarr = [super(MenuManager, self).filter(level=0, name=menu_name)]
+        else:
+            my_queryarr = [super(MenuManager, self).filter(level=0)]
         for node in query:
             my_queryarr.append(super(MenuManager, self).filter(parent_node=node).order_by('left_key'))
         return my_queryarr
