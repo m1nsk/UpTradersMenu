@@ -19,7 +19,6 @@ def menu_render(request):
 
 def menu_list(request, menu_item_id):
     # it seems to i understood task wrong and you want me to use " models.py -> MenuManager -> get_current_branch " to display the menu_branch
-    # so my way was a bit difficult =)
     object_by_id = get_object_or_404(Menu, pk=menu_item_id)
     parent_list = Menu.menu_objects.get_parent_branch(object_by_id)
     object_list = Menu.menu_objects.get_parent_with_child(parent_list)
