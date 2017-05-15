@@ -2,7 +2,11 @@
     {{ deep_counter }}
     <ul class="menu_ul">
     {% for object in object_list.0 %}
-        <li class="menu_li"><a class="menu_a" href="{% url 'menu_url' menu_item_id=object.id  %}">{{ object.name }}</a></li>
+        {% if object == active_item %}
+            <li class="menu_li"><a class="menu_a" style="background-color: #369" href="{% url 'menu_url' menu_item_id=object.id  %}">{{ object.name }}</a></li>
+        {% else %}
+            <li class="menu_li"><a class="menu_a" href="{% url 'menu_url' menu_item_id=object.id  %}">{{ object.name }}</a></li>
+        {% endif %}
             {% if object.id in menu_map %}
                 {% with object_list=object_list|slice:"1:" %}
                     {% include "menu_list.html" %}

@@ -31,6 +31,7 @@ def menu_list(request, menu_item_id):
 
     context = {
         'object_list': object_list,
-        'menu_map': menu_map
+        'menu_map': menu_map,
+        'active_item': object_by_id
     }
     return render(request, 'menu_page.html', context)
