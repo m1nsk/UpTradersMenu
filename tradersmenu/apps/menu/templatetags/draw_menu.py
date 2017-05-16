@@ -21,7 +21,6 @@ def draw_menu(name, id):
                 menu_map.append(parent.id)
                 parent = parent.parent_node
             menu_map.append(parent.id)
-
         context = {
             'object_list': object_list,
             'menu_map': menu_map,
