@@ -32,6 +32,7 @@ class MenuManager(models.Manager):
 
     # return parent with closest children
     def get_parent_with_child(self, query, menu_name=''):
+        my_queryarr = []
         if menu_name:
             my_queryarr = [super(MenuManager, self).filter(level=0, name=menu_name)]
         else:

@@ -11,6 +11,9 @@
 <body>
 {% load draw_menu%}
 <h1>Menu example</h1>
-    {% include "menu_list.html" %}
+    <h2>Menu 1</h2>
+    {% draw_menu '1' item_id %}
+    <h2>Menu 2</h2>
+    {% draw_menu '_1' item_id %}
 </body>
 </html>
